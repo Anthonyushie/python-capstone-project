@@ -14,43 +14,52 @@ def main():
 
         # Create/Load the wallets, named 'Miner' and 'Trader'. Have logic to optionally create/load them if they do not exist or are not loaded already.
         
-        # Check if Miner wallet exists and create/load it
+        # First, let's check what wallets are already loaded
         try:
-            client.loadwallet("Miner")
-            print("Miner wallet loaded")
-        except JSONRPCException as e:
-            if "Wallet file not found" in str(e) or "does not exist" in str(e):
-                try:
-                    client.createwallet("Miner")
-                    print("Miner wallet created")
-                except JSONRPCException as create_error:
-                    if "already exists" in str(create_error):
-                        print("Miner wallet already exists")
-                    else:
-                        raise create_error
-            elif "already loaded" in str(e):
-                print("Miner wallet already loaded")
-            else:
-                raise e
+            loaded_wallets = client.listwallets()
+            print(f"Currently loaded wallets: {loaded_wallets}")
+        except:
+            loaded_wallets = []
 
-        # Check if Trader wallet exists and create/load it
-        try:
-            client.loadwallet("Trader")
-            print("Trader wallet loaded")
-        except JSONRPCException as e:
-            if "Wallet file not found" in str(e) or "does not exist" in str(e):
-                try:
-                    client.createwallet("Trader")
-                    print("Trader wallet created")
-                except JSONRPCException as create_error:
-                    if "already exists" in str(create_error):
-                        print("Trader wallet already exists")
-                    else:
-                        raise create_error
-            elif "already loaded" in str(e):
-                print("Trader wallet already loaded")
-            else:
-                raise e
+        # Handle Miner wallet
+        if "Miner" not in loaded_wallets:
+            try:
+                client.createwallet("Miner")
+                print("Miner wallet created")
+            except JSONRPCException as e:
+                if "already exists" in str(e) or "Database already exists" in str(e):
+                    try:
+                        client.loadwallet("Miner")
+                        print("Miner wallet loaded")
+                    except JSONRPCException as load_error:
+                        if "already loaded" in str(load_error):
+                            print("Miner wallet already loaded")
+                        else:
+                            print(f"Miner wallet error: {load_error}")
+                else:
+                    print(f"Miner wallet creation error: {e}")
+        else:
+            print("Miner wallet already loaded")
+
+        # Handle Trader wallet
+        if "Trader" not in loaded_wallets:
+            try:
+                client.createwallet("Trader")
+                print("Trader wallet created")
+            except JSONRPCException as e:
+                if "already exists" in str(e) or "Database already exists" in str(e):
+                    try:
+                        client.loadwallet("Trader")
+                        print("Trader wallet loaded")
+                    except JSONRPCException as load_error:
+                        if "already loaded" in str(load_error):
+                            print("Trader wallet already loaded")
+                        else:
+                            print(f"Trader wallet error: {load_error}")
+                else:
+                    print(f"Trader wallet creation error: {e}")
+        else:
+            print("Trader wallet already loaded")
 
         # Create wallet-specific RPC clients
         miner_client = AuthServiceProxy(RPC_URL + "/wallet/Miner")
@@ -197,6 +206,11 @@ def main():
         print(f"Miner Change: {miner_change_address} ({miner_change_amount} BTC)")
         print(f"Transaction Fee: {transaction_fees} BTC")
         print(f"Confirmed in block {current_block_height}: {current_block_hash}")
+        
+        # Important: Don't shut down Bitcoin Core - let it keep running for the test
+        print("\n=== IMPORTANT ===")
+        print("Bitcoin Core is still running for test verification.")
+        print("The test script will handle cleanup.")
 
     except Exception as e:
         print("Error occurred: {}".format(e))
